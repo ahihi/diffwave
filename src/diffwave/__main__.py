@@ -14,6 +14,7 @@
 # ==============================================================================
 
 from argparse import ArgumentParser
+import json
 from torch.cuda import device_count
 from torch.multiprocessing import spawn
 
@@ -28,6 +29,12 @@ def _get_free_port():
 
 
 def main(args):
+  if args.params_file is not None:
+    with open(args.params, "r") as fp:
+      params.override(json.load(fp))
+  if args.params is not None:
+    params.override(json.loads(args.params))
+
   replica_count = device_count()
   if replica_count > 1:
     if params.batch_size % replica_count != 0:
@@ -49,4 +56,8 @@ if __name__ == '__main__':
       help='maximum number of training steps')
   parser.add_argument('--fp16', action='store_true', default=False,
       help='use 16-bit floating point operations for training')
+  parser.add_argument('--params_file', default=None,
+      help='override default params using json file')
+  parser.add_argument('--params', default=None,
+      help='override default params using json string')
   main(parser.parse_args())
